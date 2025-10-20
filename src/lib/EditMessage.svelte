@@ -5,7 +5,7 @@
   import { getPrice } from './Stats.svelte'
   import SvelteMarkdown from 'svelte-markdown'
   import type { Message, Model, Chat } from './Types.svelte'
-  import Fa from 'svelte-fa/src/fa.svelte'
+  import Fa from 'svelte-fa'
   import { faTrash, faDiagramPredecessor, faDiagramNext, faCircleCheck, faPaperPlane, faEye, faEyeSlash, faEllipsis, faDownload, faClipboard } from '@fortawesome/free-solid-svg-icons/index'
   import { errorNotice, scrollToMessage } from './Util.svelte'
   import { openModal } from 'svelte-modals'
@@ -277,7 +277,7 @@
     <div class="button-pack">
       {#if message.finish_reason === 'length' || message.finish_reason === 'abort'}
       <a
-        href={'#'}
+        href="#"
         title="Continue "
         class="msg-incomplete button is-small"
         on:click|preventDefault={() => {
@@ -289,7 +289,7 @@
       {/if}
       {#if message.summarized}
       <a
-        href={'#'}
+        href="#"
         title="Jump to summary"
         class="msg-summary button is-small"
         on:click|preventDefault={() => {
@@ -301,7 +301,7 @@
       {/if}
       {#if message.summary}
       <a
-        href={'#'}
+        href="#"
         title="Jump to summarized"
         class="msg-summarized button is-small"
         on:click|preventDefault={() => {
@@ -313,7 +313,7 @@
       {/if}
       {#if !message.summarized}
       <a
-        href={'#'}
+        href="#"
         title="Delete this message"
         class="msg-delete button is-small"
         on:click|preventDefault={() => {
@@ -329,7 +329,7 @@
       {/if}
       {#if !isImage && !message.summarized && !isError}
         <a
-          href={'#'}
+          href="#"
           title="Truncate from here and send"
           class="msg-truncate button is-small"
           on:click|preventDefault={() => {
@@ -345,7 +345,7 @@
       {/if}
       {#if !isImage && !message.summarized && !isSystem && !isError}
         <a
-          href={'#'}
+          href="#"
           title={(message.suppress ? 'Uns' : 'S') + 'uppress message from submission'}
           class="msg-supress button is-small"
           on:click|preventDefault={() => {
@@ -361,7 +361,7 @@
       {/if}
       {#if !isImage}
         <a
-          href={'#'}
+          href="#"
           title="Copy to Clipboard"
           class="msg-image button is-small"
           on:click|preventDefault={() => {
@@ -373,7 +373,7 @@
       {/if}
       {#if imageUrl}
         <a
-          href={'#'}
+          href="#"
           title="Download Image"
           class="msg-image button is-small"
           on:click|preventDefault={() => {

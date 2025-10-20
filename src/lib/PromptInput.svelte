@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Fa from 'svelte-fa/src/fa.svelte'
+  import Fa from 'svelte-fa'
   import { closeModal } from 'svelte-modals'
   import {
     faExclamation
@@ -49,7 +49,7 @@
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div class="modal-background" on:click={doClose} />
   <div class="modal-content nomax">
-    <form action="{'#'}" on:submit|preventDefault={() => { doSubmit(value) }}> 
+    <form action="#" on:submit|preventDefault={() => { doSubmit(value) }}> 
     <article class="message {classes}">
       <div class="message-header">
         <p>{title}</p>

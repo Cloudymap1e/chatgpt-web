@@ -2,7 +2,7 @@
   import { replace } from 'svelte-spa-router'
   import type { Chat } from './Types.svelte'
   import { deleteChat, pinMainMenu, saveChatStore } from './Storage.svelte'
-  import Fa from 'svelte-fa/src/fa.svelte'
+  import Fa from 'svelte-fa'
   import { faTrash, faCircleCheck, faPencil } from '@fortawesome/free-solid-svg-icons/index'
   import { faMessage } from '@fortawesome/free-regular-svg-icons/index'
   import { onMount } from 'svelte'
@@ -90,10 +90,10 @@
     class:is-waiting={waitingForConfirm} class:is-disabled={!hasActiveModels()} class:is-active={activeChatId === chat.id}
     on:click={() => { $pinMainMenu = false }} >
     {#if waitingForConfirm}
-    <a class="is-pulled-right is-hidden px-1 py-0 has-text-weight-bold delete-button" href={'$'} on:click|preventDefault={() => delChat()}><Fa icon={faCircleCheck} /></a>
+    <a class="is-pulled-right is-hidden px-1 py-0 has-text-weight-bold delete-button" href="$" on:click|preventDefault={() => delChat()}><Fa icon={faCircleCheck} /></a>
     {:else}
-    <a class="is-pulled-right is-hidden px-1 py-0 has-text-weight-bold edit-button" href={'$'} on:click|preventDefault={() => edit()}><Fa icon={faPencil} /></a>
-    <a class="is-pulled-right is-hidden px-1 py-0 has-text-weight-bold delete-button" href={'$'} on:click|preventDefault={() => delChat()}><Fa icon={faTrash} /></a>
+    <a class="is-pulled-right is-hidden px-1 py-0 has-text-weight-bold edit-button" href="$" on:click|preventDefault={() => edit()}><Fa icon={faPencil} /></a>
+    <a class="is-pulled-right is-hidden px-1 py-0 has-text-weight-bold delete-button" href="$" on:click|preventDefault={() => delChat()}><Fa icon={faTrash} /></a>
     {/if}
     <span class="chat-item-name"><Fa class="mr-2 chat-icon" size="xs" icon="{faMessage}"/>{chat.name || `Chat ${chat.id}`}</span>
   </a>

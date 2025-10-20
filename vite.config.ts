@@ -15,7 +15,10 @@ export default defineConfig(({ command, mode, ssrBuild }) => {
       css: {
         postcss: {
           plugins: [
-            purgecss({
+            (purgecss as any).default ? (purgecss as any).default({
+              content: ['./**/*.html', './**/*.svelte'],
+              safelist: ['pre', 'code']
+            }) : purgecss({
               content: ['./**/*.html', './**/*.svelte'],
               safelist: ['pre', 'code']
             })

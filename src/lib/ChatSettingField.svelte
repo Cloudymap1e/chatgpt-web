@@ -5,7 +5,7 @@
   import type { Chat, ChatSetting, ChatSettings, ControlAction, FieldControl, SettingPrompt } from './Types.svelte'
   import { autoGrowInputOnEvent, errorNotice, valueOf } from './Util.svelte'
   // import { replace } from 'svelte-spa-router'
-  import Fa from 'svelte-fa/src/fa.svelte'
+  import Fa from 'svelte-fa'
   import { openModal } from 'svelte-modals'
   import PromptConfirm from './PromptConfirm.svelte'
   import { afterUpdate, onMount } from 'svelte'
@@ -14,7 +14,7 @@
   export let chatSettings:ChatSettings
   export let chat:Chat
   export let chatDefaults:Record<string, any>
-  export let originalProfile:String
+  export let originalProfile:string
   export let rkey:number = 0
 
 

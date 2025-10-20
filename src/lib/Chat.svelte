@@ -21,7 +21,7 @@
   import Messages from './Messages.svelte'
   import { restartProfile } from './Profiles.svelte'
   import { afterUpdate, onMount, onDestroy } from 'svelte'
-  import Fa from 'svelte-fa/src/fa.svelte'
+  import Fa from 'svelte-fa'
   import {
     faArrowUpFromBracket,
     faPaperPlane,
@@ -127,7 +127,7 @@
       recognition = new window.SpeechRecognition()
     } else if ('webkitSpeechRecognition' in window) {
       // @ts-ignore
-      recognition = new window.webkitSpeechRecognition() // eslint-disable-line new-cap
+      recognition = new window.webkitSpeechRecognition()  
     }
 
     if (recognition) {
@@ -365,8 +365,8 @@
     <div class="level-item">
       <p class="subtitle is-5">
         <span>{chat.name || `Chat ${chat.id}`}</span>
-        <a href={'#'} class="greyscale ml-2 is-hidden has-text-weight-bold editbutton" title="Rename chat" on:click|preventDefault={promptRename}><Fa icon={faPenToSquare} /></a>
-        <a href={'#'} class="greyscale ml-2 is-hidden has-text-weight-bold editbutton" title="Suggest a chat name" on:click|preventDefault={suggestName}><Fa icon={faLightbulb} /></a>
+        <a href="#" class="greyscale ml-2 is-hidden has-text-weight-bold editbutton" title="Rename chat" on:click|preventDefault={promptRename}><Fa icon={faPenToSquare} /></a>
+        <a href="#" class="greyscale ml-2 is-hidden has-text-weight-bold editbutton" title="Suggest a chat name" on:click|preventDefault={suggestName}><Fa icon={faLightbulb} /></a>
         <!-- <a href={'#'} class="greyscale ml-2 is-hidden has-text-weight-bold editbutton" title="Copy this chat" on:click|preventDefault={() => { copyChat(chatId) }}><Fa icon={faClone} /></a> -->
         <!-- <a href={'#'} class="greyscale ml-2 is-hidden has-text-weight-bold editbutton" title="Delete this chat" on:click|preventDefault={deleteChat}><Fa icon={faTrash} /></a> -->
       </p>

@@ -14,7 +14,7 @@
   } from './Storage.svelte'
   import type { Chat, ChatSetting, SettingSelect, ChatSettings } from './Types.svelte'
   import { errorNotice, sizeTextElements } from './Util.svelte'
-  import Fa from 'svelte-fa/src/fa.svelte'
+  import Fa from 'svelte-fa'
   import {
     faTrash,
     faClone,
@@ -300,40 +300,40 @@
             </div>
             <div class="dropdown-menu" id="dropdown-menu3" role="menu">
               <div class="dropdown-content">
-                <a href={'#'} class="dropdown-item" class:is-disabled={!chatSettings.isDirty} on:click|preventDefault={saveProfile}>
+                <a href="#" class="dropdown-item" class:is-disabled={!chatSettings.isDirty} on:click|preventDefault={saveProfile}>
                   <span class="menu-icon"><Fa icon={faFloppyDisk}/></span> Save Changes
                 </a>
-                <a href={'#'} class="dropdown-item" class:is-disabled={!chatSettings.isDirty} on:click|preventDefault={clearSettings}>
+                <a href="#" class="dropdown-item" class:is-disabled={!chatSettings.isDirty} on:click|preventDefault={clearSettings}>
                   <span class="menu-icon"><Fa icon={faRotateLeft}/></span> Reset Changes
                 </a>
-                <a href={'#'} class="dropdown-item" on:click|preventDefault={cloneProfile}>
+                <a href="#" class="dropdown-item" on:click|preventDefault={cloneProfile}>
                   <span class="menu-icon"><Fa icon={faClone}/></span> Clone Profile
                 </a>
                 <hr class="dropdown-divider">
-                <a href={'#'} class="dropdown-item" class:is-disabled={isDefault} on:click|preventDefault={pinDefaultProfile}>
+                <a href="#" class="dropdown-item" class:is-disabled={isDefault} on:click|preventDefault={pinDefaultProfile}>
                   <span class="menu-icon"><Fa icon={faThumbtack}/></span> Set as Default Profile
                 </a>
-                <a href={'#'} class="dropdown-item" on:click|preventDefault={startNewChat}>
+                <a href="#" class="dropdown-item" on:click|preventDefault={startNewChat}>
                   <span class="menu-icon"><Fa icon={faSquarePlus}/></span> Start New Chat from Current
                 </a>
                 <!-- <a href={'#'} class="dropdown-item" on:click|preventDefault={applyToChat}>
                   <span class="menu-icon"><Fa icon={faCheckCircle}/></span> Apply Prompts to Current Chat
                 </a> -->
                 <hr class="dropdown-divider">
-                <a href={'#'} 
+                <a href="#" 
                   class="dropdown-item"
                   on:click|preventDefault={() => { showProfileMenu = false; exportProfileAsJSON(chatId) }}
                 >
                   <span class="menu-icon"><Fa icon={faDownload}/></span> Backup Profile JSON
                 </a>
-                <a href={'#'} class="dropdown-item" on:click|preventDefault={() => { showProfileMenu = false; profileFileInput.click() }}>
+                <a href="#" class="dropdown-item" on:click|preventDefault={() => { showProfileMenu = false; profileFileInput.click() }}>
                   <span class="menu-icon"><Fa icon={faUpload}/></span> Restore Profile JSON
                 </a>
-                <a href={'#'} class="dropdown-item" on:click|preventDefault={() => { showProfileMenu = false; copySettingsAsUri() }}>
+                <a href="#" class="dropdown-item" on:click|preventDefault={() => { showProfileMenu = false; copySettingsAsUri() }}>
                   <span class="menu-icon"><Fa icon={faClipboard}/></span> Copy Profile URL to Clipboard
                 </a>
                 <hr class="dropdown-divider">
-                <a href={'#'} class="dropdown-item" on:click|preventDefault={promptDeleteProfile}>
+                <a href="#" class="dropdown-item" on:click|preventDefault={promptDeleteProfile}>
                   <span class="menu-icon"><Fa icon={faTrash}/></span> Delete Profile
                 </a>
               </div>
