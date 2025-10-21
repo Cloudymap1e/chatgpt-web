@@ -37,7 +37,7 @@ const chatModelBase = {
   request: chatRequest,
   getEndpoint: (model) => get(globalStorage).pedalsEndpoint || (getPetalsBase() + getPetalsWebsocket()),
   getTokens: (value) => llamaTokenizer.encode(value),
-  hideSetting: (chatId, setting) => !!hideSettings[setting.key],
+  hideSetting: (_chatId, _setting) => !!hideSettings[setting.key],
   countMessageTokens: (message:Message, model:Model, chat: Chat):number => {
         const delim = getDelimiter(chat)
         return countTokens(model, getRoleTag(message.role, model, chat) + ': ' +

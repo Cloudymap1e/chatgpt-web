@@ -45,7 +45,7 @@
     '*': Home
   }
 
-  const onLocationChange = (...args:any) => {
+  const onLocationChange = (..._args:any) => {
     // close all modals on route change
     dispatchModalEsc()
   }

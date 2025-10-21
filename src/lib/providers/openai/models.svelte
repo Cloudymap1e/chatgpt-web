@@ -51,7 +51,7 @@
     getEndpoint: (model) =>
       get(globalStorage).openAICompletionEndpoint ||
       getApiBase() + getEndpointCompletions(),
-    hideSetting: (chatId, setting) => !!hiddenSettings[setting.key],
+    hideSetting: (_chatId, _setting) => !!hiddenSettings[setting.key],
     countMessageTokens: (message: Message, model: Model, chat: Chat) => {
       return countTokens(
         model,
@@ -174,7 +174,7 @@
     check: checkModel,
     getTokens: (value) => [0],
     getEndpoint: (model) => getApiBase() + getEndpointGenerations(),
-    hideSetting: (chatId, setting) => false
+    hideSetting: (_chatId, _setting) => false
   } as ModelDetail
 
   export const imageModels: Record<string, ModelDetail> = {

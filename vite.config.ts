@@ -6,8 +6,13 @@ import purgecss from '@fullhuman/postcss-purgecss'
 
 const plugins = [svelte(), dsv()]
 
+const purgecssConfig = {
+  content: ['./**/*.html', './**/*.svelte'],
+  safelist: ['pre', 'code']
+}
+
 // https://vitejs.dev/config/
-export default defineConfig(({ command, mode, ssrBuild }) => {
+export default defineConfig(({ command }) => {
   // Only run PurgeCSS in production builds
   if (command === 'build') {
     return {
@@ -15,13 +20,8 @@ export default defineConfig(({ command, mode, ssrBuild }) => {
       css: {
         postcss: {
           plugins: [
-            (purgecss as any).default ? (purgecss as any).default({
-              content: ['./**/*.html', './**/*.svelte'],
-              safelist: ['pre', 'code']
-            }) : purgecss({
-              content: ['./**/*.html', './**/*.svelte'],
-              safelist: ['pre', 'code']
-            })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (purgecss as any).default ? (purgecss as any).default(purgecssConfig) : purgecss(purgecssConfig)
           ]
         }
       },
