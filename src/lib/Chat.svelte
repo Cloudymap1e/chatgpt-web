@@ -30,7 +30,8 @@
     faMicrophone,
     faLightbulb,
     faCommentSlash,
-    faCircleCheck
+    faCircleCheck,
+    faXmark
   } from '@fortawesome/free-solid-svg-icons/index'
   import { v4 as uuidv4 } from 'uuid'
   import { getPrice } from './Stats.svelte'
@@ -41,6 +42,7 @@
   import PromptInput from './PromptInput.svelte'
   import { ChatRequest } from './ChatRequest.svelte'
   import { getModelDetail } from './Models.svelte'
+  import { setImage } from './ImageStore.svelte'
 
   export let params = { chatId: '' }
   const chatId: number = parseInt(params.chatId)
@@ -50,6 +52,8 @@
   let recognition: any = null
   let recording = false
   let lastSubmitRecorded = false
+  let pendingImage:any = null
+  let pendingImageUrl:string = ''
 
   $: chat = $chatsStorage.find((chat) => chat.id === chatId) as Chat
   $: chatSettings = chat?.settings
@@ -183,12 +187,92 @@
     } else {
       inputMessage = { role: 'user', content: input.value, uuid }
     }
+    if (pendingImage) inputMessage.image = pendingImage
     addMessage(chatId, inputMessage)
 
     // Clear the input value
     input.value = ''
+    pendingImage = null
+    pendingImageUrl = ''
     // input.blur()
     focusInput()
+  }
+
+  const clearPendingImage = () => {
+    pendingImage = null
+    pendingImageUrl = ''
+    focusInput()
+  }
+
+  const attachImageBlob = async (blob: Blob) => {
+    const reader = new FileReader()
+    let dataUrl = await new Promise<string>((resolve, reject) => {
+      reader.onerror = () => reject(new Error('Failed to read image'))
+      reader.onload = () => resolve(reader.result as string)
+      reader.readAsDataURL(blob)
+    })
+
+    // Some upstreams reject extremely small images; scale up to a minimum size.
+    try {
+      const img = new Image()
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = () => reject(new Error('Failed to decode image'))
+        img.src = dataUrl
+      })
+      const minSide = 32
+      const targetW = Math.max(minSide, img.naturalWidth || 0)
+      const targetH = Math.max(minSide, img.naturalHeight || 0)
+      if ((img.naturalWidth && img.naturalWidth < minSide) || (img.naturalHeight && img.naturalHeight < minSide)) {
+        const canvas = document.createElement('canvas')
+        canvas.width = targetW
+        canvas.height = targetH
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.imageSmoothingEnabled = false
+          ctx.drawImage(img, 0, 0, targetW, targetH)
+          dataUrl = canvas.toDataURL('image/png')
+        }
+      }
+    } catch (e) {
+      // If scaling fails, fall back to the original data URL.
+      console.error(e)
+    }
+
+    const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/)
+    if (!match) throw new Error('Unsupported image encoding')
+    const mime = match[1] || 'image/png'
+    const b64 = match[2] || ''
+    const stored = await setImage(chatId, { b64image: b64, mime } as any)
+    pendingImage = stored
+    pendingImageUrl = dataUrl
+  }
+
+  const onPaste = async (event: ClipboardEvent) => {
+    const items = event.clipboardData?.items
+    if (!items) return
+    const imageItem = Array.from(items).find(i => i.type && i.type.startsWith('image/'))
+    if (!imageItem) return
+    event.preventDefault()
+    try {
+      const blob = imageItem.getAsFile()
+      if (blob) await attachImageBlob(blob)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const onDrop = async (event: DragEvent) => {
+    const files = event.dataTransfer?.files
+    if (!files || !files.length) return
+    const file = Array.from(files).find(f => f.type && f.type.startsWith('image/'))
+    if (!file) return
+    event.preventDefault()
+    try {
+      await attachImageBlob(file)
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   const ttsStart = (text:string, recorded:boolean) => {
@@ -226,9 +310,10 @@
     if (!skipInput) {
       chat.sessionStarted = true
       saveChatStore()
-      if (input.value !== '') {
+      if (input.value !== '' || pendingImage) {
         // Compose the input message
         const inputMessage: Message = { role: 'user', content: input.value, uuid: uuidv4() }
+        if (pendingImage) inputMessage.image = pendingImage
         addMessage(chatId, inputMessage)
       } else if (!fillMessage && $currentChatMessages.length &&
         $currentChatMessages[$currentChatMessages.length - 1].role === 'assistant') {
@@ -237,6 +322,8 @@
   
       // Clear the input value
       input.value = ''
+      pendingImage = null
+      pendingImageUrl = ''
       input.blur()
   
       // Resize back to single line height
@@ -402,6 +489,9 @@
         class="input is-info is-focused chat-input auto-size"
         placeholder="[{chat.settings.model}] Type your message here..."
         rows="1"
+        on:paste={onPaste}
+        on:drop={onDrop}
+        on:dragover|preventDefault={() => {}}
         on:keydown={e => {
           // Only send if Enter is pressed, not Shift+Enter
           if (e.key === 'Enter' && !e.shiftKey) {
@@ -413,6 +503,16 @@
         on:input={e => autoGrowInputOnEvent(e)}
         bind:this={input}
       />
+      {#if pendingImageUrl}
+        <div class="mt-2 is-flex is-align-items-center is-gap-2">
+          <figure class="image is-64x64">
+            <img alt="attachment" src={pendingImageUrl} style="object-fit: cover;" />
+          </figure>
+          <button type="button" class="button is-light" title="Remove attachment" on:click|preventDefault={clearPendingImage}>
+            <span class="icon"><Fa icon={faXmark} /></span>
+          </button>
+        </div>
+      {/if}
     </p>
     <p class="control mic" class:is-hidden={!recognition}>
       <button class="button" class:is-disabled={chatRequest.updating} class:is-pulse={recording} on:click|preventDefault={recordToggle}

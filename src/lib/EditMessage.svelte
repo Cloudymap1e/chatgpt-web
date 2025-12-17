@@ -53,7 +53,8 @@
     defaultModel = chatSettings.model
     if (message?.image) {
       getImage(message.image.id).then(i => {
-        imageUrl = 'data:image/png;base64, ' + i.b64image
+        const mime = i.mime || message.image?.mime || 'image/png'
+        imageUrl = `data:${mime};base64,${i.b64image}`
       })
     }
     displayMessage = getDisplayMessage()

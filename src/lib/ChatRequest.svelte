@@ -129,7 +129,9 @@ export class ChatRequest {
         // Submit only the role and content of the messages, provide the previous messages as well for context
         const messageFilter = (m:Message) => !m.suppress &&
           includedRoles.includes(m.role) &&
-          m.content && !m.summarized
+          // Allow image-only user messages (no text content)
+          ((m.content && m.content.length) || m.image) &&
+          !m.summarized
         const filtered = messages.filter(messageFilter)
     
         // If we're doing continuous chat, do it
@@ -141,7 +143,8 @@ export class ChatRequest {
         const messagePayload = filtered
           .filter(m => { if (m.skipOnce) { delete m.skipOnce; return false } return true })
           .map(m => {
-            const content = m.content + (m.appendOnce || []).join('\n'); delete m.appendOnce; return { role: m.role, content: cleanContent(chatSettings, content) }
+            const content = m.content + (m.appendOnce || []).join('\n'); delete m.appendOnce
+            return { role: m.role, content: cleanContent(chatSettings, content), image: m.image } as Message
           }) as Message[]
 
         // Parse system and expand prompt if needed

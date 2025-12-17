@@ -24,9 +24,15 @@ import { getChatModelOptions, getModelDetail, getTokens } from './Models.svelte'
 // circular dependencies. Alternative would be a big refactor,
 // which we want to avoid for now.
 export const getDefaultModel = async (): Promise<Model> => {
-  if (!get(apiKeyStorage)) return 'stabilityai/StableBeluga2'
+  const serverManagedKey = !!import.meta.env.VITE_SERVER_API_KEY
+  if (!get(apiKeyStorage) && !serverManagedKey) return 'stabilityai/StableBeluga2'
 
   const models = await getChatModelOptions()
+  if (!models || models.length === 0) {
+    const allow = (import.meta.env.VITE_MODEL_ALLOWLIST || '').split(',').map((s) => s.trim()).filter(Boolean)
+    if (allow.length > 0) return allow[0] as Model
+    return 'gpt-4o' as Model
+  }
 
   return models[0].text
 }
@@ -137,6 +143,7 @@ export const globalDefaults: GlobalSettings = {
   defaultProfile: 'default',
   hideSummarized: false,
   chatSort: 'created',
+  useResponsesApi: false,
   openAICompletionEndpoint: '',
   enablePetals: false,
   pedalsEndpoint: '',
@@ -709,6 +716,11 @@ const globalSettingsList:GlobalSetting[] = [
       {
         key: 'hideSummarized',
         name: 'Hide Summarized Messages',
+        type: 'boolean'
+      },
+      {
+        key: 'useResponsesApi',
+        name: 'Use Responses API',
         type: 'boolean'
       },
       {

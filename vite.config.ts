@@ -26,7 +26,18 @@ export default defineConfig(({ command, mode, ssrBuild }) => {
     }
   } else {
     return {
-      plugins
+      plugins,
+      server: {
+        // CORS-free local dev: point the app's "API BASE URI" to this Vite server
+        // (e.g. http://<LAN-IP>:5173) and proxy /v1/* to the upstream.
+        proxy: {
+          '/v1': {
+            target: process.env.VITE_UPSTREAM_PROXY_TARGET || 'https://right.codes/codex',
+            changeOrigin: true,
+            secure: true
+          }
+        }
+      }
     }
   }
 })

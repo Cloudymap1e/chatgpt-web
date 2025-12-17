@@ -20,5 +20,9 @@ services:
         context: "."
         dockerfile: mocked_api/Dockerfile-mockapi
     restart: always
+    env_file:
+      - .env
     ports:
       - 5174:5174
+    volumes:
+      - .:/work

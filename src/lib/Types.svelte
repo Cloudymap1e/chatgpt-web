@@ -17,6 +17,7 @@ export type Usage = {
 export interface ChatImage {
     id: string;
     b64image: string;
+    mime?: string;
     chats: number[];
   }
 
@@ -159,6 +160,7 @@ export type GlobalSettings = {
     defaultProfile: string;
     hideSummarized: boolean;
     chatSort: ChatSortOptions;
+    useResponsesApi: boolean;
     openAICompletionEndpoint: string;
     enablePetals: boolean;
     pedalsEndpoint: string;

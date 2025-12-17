@@ -50,7 +50,10 @@
     getTokens: (value) => encode(value),
     getEndpoint: (model) =>
       get(globalStorage).openAICompletionEndpoint ||
-      getApiBase() + getEndpointCompletions(),
+      (getApiBase() +
+        (get(globalStorage).useResponsesApi
+          ? '/v1/responses'
+          : getEndpointCompletions())),
     hideSetting: (chatId, setting) => !!hiddenSettings[setting.key],
     countMessageTokens: (message: Message, model: Model, chat: Chat) => {
       return countTokens(

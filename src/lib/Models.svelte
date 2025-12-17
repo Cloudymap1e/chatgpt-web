@@ -30,6 +30,15 @@ Object.entries(lookupList).forEach(([k, v]) => {
 export const supportedChatModelKeys = Object.keys({ ...supportedChatModels })
 
 const tpCache : Record<string, ModelDetail> = {}
+const modelAllowlist = (import.meta.env.VITE_MODEL_ALLOWLIST || '')
+  .split(',')
+  .map((s: string) => s.trim())
+  .filter(Boolean)
+const modelAllowlistSet = new Set(modelAllowlist)
+const isAllowedModel = (id: string): boolean => {
+  if (modelAllowlistSet.size === 0) return true
+  return modelAllowlistSet.has(id)
+}
 
 export const getModelDetail = (model: Model): ModelDetail => {
   // Ensure model is a string for typesafety
@@ -159,7 +168,8 @@ export const countTokens = (model: Model, value: string): number => {
 
 export const hasActiveModels = (): boolean => {
     const globalSettings = get(globalStorage) || {}
-    return !!get(apiKeyStorage) || !!globalSettings.enablePetals
+    const serverManagedKey = !!import.meta.env.VITE_SERVER_API_KEY
+    return !!get(apiKeyStorage) || serverManagedKey || !!globalSettings.enablePetals
 }
 
 const sortModelsAlphabetically = (a: SelectOption, b: SelectOption): number => {
@@ -176,9 +186,31 @@ export async function getChatModelOptions (): Promise<SelectOption[]> {
 
     // We are checking if the OpenAI endpoint is used, so we only fetch
     // additional models for non-OpenAI endpoints
-    const remoteModels = isOpenAi ? {} : await fetchRemoteModels()
+    let remoteModels: Record<string, ModelDetail> = {}
+    if (!isOpenAi) {
+      try {
+        remoteModels = (await fetchRemoteModels()) as Record<string, ModelDetail>
+      } catch (e) {
+        console.warn('Failed to fetch remote models:', e)
+        remoteModels = {}
+      }
+    }
 
-    const models = Object.keys({ ...supportedChatModels, ...remoteModels })
+    // Make remote models discoverable by getModelDetail() (and label/check logic)
+    // without mutating the base model maps.
+    Object.entries(remoteModels).forEach(([id, detail]) => {
+      tpCache[id] = { ...detail, id, modelQuery: detail.modelQuery || id }
+    })
+
+    let models = Object.keys({ ...supportedChatModels, ...remoteModels }).filter(isAllowedModel)
+    // If the allowlist is set but the remote model fetch failed (or returned none),
+    // still present the allowlisted models so the app remains usable.
+    if (models.length === 0 && modelAllowlist.length > 0) {
+      models = [...modelAllowlist]
+      models.forEach((id) => {
+        tpCache[id] = tpCache[id] || { ...fallbackModelDetail, id, modelQuery: id }
+      })
+    }
     const modelOptionsActive:SelectOption[] = []
     const modelOptionsInactive:SelectOption[] = []
   

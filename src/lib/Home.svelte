@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { apiKeyStorage, globalStorage, lastChatId, getChat, started, setGlobalSettingValueByKey, checkStateChange } from './Storage.svelte'
+  import { apiKeyStorage, globalStorage, lastChatId, getApiBase, getChat, started, setGlobalSettingValueByKey, checkStateChange } from './Storage.svelte'
   import Footer from './Footer.svelte'
   import { replace } from 'svelte-spa-router'
   import { afterUpdate, onMount } from 'svelte'
@@ -8,14 +8,29 @@
   import { hasActiveModels } from './Models.svelte'
   import { get } from 'svelte/store'
 
+  const hideApiKeyInput = !!import.meta.env.VITE_HIDE_API_KEY_INPUT
+  const serverManagedKey = !!import.meta.env.VITE_SERVER_API_KEY
+
   $: apiKey = $apiKeyStorage
-  const openAiEndpoint = $globalStorage.openAiEndpoint || ''
+  $: apiKeyReady = !!apiKey || serverManagedKey
+  $: openAiEndpoint = $globalStorage.openAiEndpoint || ''
+  $: openAICompletionEndpoint = $globalStorage.openAICompletionEndpoint || ''
+  $: useResponsesApi = !!$globalStorage.useResponsesApi
   let showPetalsSettings = $globalStorage.enablePetals
   let pedalsEndpoint = $globalStorage.pedalsEndpoint
   let hasModels = hasActiveModels()
   let apiError: string = ''
 
   onMount(() => {
+    // In server-managed deployments, default the API base to the current origin
+    // so "New chat" works without manual setup.
+    if (serverManagedKey && !$globalStorage.openAiEndpoint) {
+      try {
+        setGlobalSettingValueByKey('openAiEndpoint', window.location.origin)
+      } catch {
+        // ignore
+      }
+    }
     if (!$started) {
       $started = true
       if (hasActiveModels() && getChat($lastChatId)) {
@@ -42,9 +57,10 @@
 
   async function testApiEndpoint (baseUri: string): Promise<boolean> {
     try {
-      const response = await fetch(`${baseUri}/v1/models`, {
-        headers: { Authorization: `Bearer ${get(apiKeyStorage)}` }
-      })
+      const headers: Record<string, string> = {}
+      const key = get(apiKeyStorage)
+      if (key) headers.Authorization = `Bearer ${key}`
+      const response = await fetch(`${baseUri}/v1/models`, { headers })
       if (!response.ok) {
         apiError = `There was an error connecting to this endpoint: ${response.statusText}`
         return false
@@ -76,45 +92,52 @@
     </p>
     </div>
   </article>
-  <article class="message" class:is-danger={!hasModels} class:is-warning={!apiKey} class:is-info={apiKey}>
+  <article class="message" class:is-danger={!hasModels} class:is-warning={!apiKeyReady} class:is-info={apiKeyReady}>
     <div class="message-body">
-      Set your OpenAI API key below:
-
-      <form
-        class="field has-addons has-addons-right"
-        on:submit|preventDefault={async (event) => {
-          let val = ''
-          if (event.target && event.target[0].value) {
-            val = (event.target[0].value).trim()
-          }
-          setOpenAI({ apiKey: val })
-          hasModels = hasActiveModels()
-        }}
-      >
-        <p class="control is-expanded">
-          <input
-            aria-label="OpenAI API key"
-            type="password"
-            autocomplete="off"
-            class="input"
-            class:is-danger={!hasModels}
-            class:is-warning={!apiKey}
-            class:is-info={apiKey}
-            value={apiKey}
-          />
+      {#if hideApiKeyInput}
+        <p>
+          This deployment uses a server-managed API key.
+          {#if !hasModels}
+            <br />No models detected yet — verify your API Base URI and server configuration.
+          {/if}
         </p>
-        <p class="control">
-          <button class="button is-info" type="submit">Save</button>
-        </p>
+      {:else}
+        Set your OpenAI API key below:
 
+        <form
+          class="field has-addons has-addons-right"
+          on:submit|preventDefault={async (event) => {
+            let val = ''
+            if (event.target && event.target[0].value) {
+              val = (event.target[0].value).trim()
+            }
+            setOpenAI({ apiKey: val })
+            hasModels = hasActiveModels()
+          }}
+        >
+          <p class="control is-expanded">
+            <input
+              aria-label="OpenAI API key"
+              type="password"
+              autocomplete="off"
+              class="input"
+              class:is-danger={!hasModels}
+              class:is-warning={!apiKey}
+              class:is-info={apiKey}
+              value={apiKey}
+            />
+          </p>
+          <p class="control">
+            <button class="button is-info" type="submit">Save</button>
+          </p>
+        </form>
 
-      </form>
-
-      {#if !apiKey}
-        <p class:is-danger={!hasModels} class:is-warning={!apiKey}>
-          Please enter your <a target="_blank" href="https://platform.openai.com/account/api-keys">OpenAI API key</a> above to use Open AI's ChatGPT API.
-          At least one API must be enabled to use ChatGPT-web.
-        </p>
+        {#if !apiKey}
+          <p class:is-danger={!hasModels} class:is-warning={!apiKey}>
+            Please enter your <a target="_blank" href="https://platform.openai.com/account/api-keys">OpenAI API key</a> above to use Open AI's ChatGPT API.
+            At least one API must be enabled to use ChatGPT-web.
+          </p>
+        {/if}
       {/if}
     </div>
   </article>
@@ -129,8 +152,12 @@
           if (event.target && event.target[0].value) {
             val = (event.target[0].value).trim()
           }
-          if (await testApiEndpoint(val)) {
-            setGlobalSettingValueByKey('openAiEndpoint', val)
+          // Save even if the browser can't verify it (common: CORS blocks the test fetch).
+          // We keep the warning in `apiError` so the user still sees a problem immediately.
+          const ok = await testApiEndpoint(val)
+          setGlobalSettingValueByKey('openAiEndpoint', val)
+          if (!ok) {
+            apiError += ' (saved anyway; if this is a CORS issue, use a local reverse proxy)'
           }
         }}
       >
@@ -150,6 +177,65 @@
       </form>
       {#if apiError}
         <p class:is-danger={apiError}>{apiError}</p>
+      {/if}
+    </div>
+  </article>
+
+  <article class="message" class:is-info={useResponsesApi}>
+    <div class="message-body">
+      <label class="label" for="useResponsesApi">
+        <input
+          type="checkbox"
+          class="checkbox"
+          id="useResponsesApi"
+          checked={useResponsesApi}
+          on:change={(event) => {
+            const el = event.target
+            const checked = !!(el && el.checked)
+            setGlobalSettingValueByKey('useResponsesApi', checked)
+            // If this was previously set via an older auto-generated full URL, clear it so
+            // the endpoint is derived from the current API base URI.
+            if (
+              openAICompletionEndpoint &&
+              (openAICompletionEndpoint.endsWith('/v1/responses') ||
+                openAICompletionEndpoint.endsWith('/v1/responses/'))
+            ) {
+              setGlobalSettingValueByKey('openAICompletionEndpoint', '')
+            }
+          }}
+        >
+        Use OpenAI Responses API (`/v1/responses`)
+      </label>
+
+      {#if !useResponsesApi}
+        <details>
+          <summary>Advanced: override full chat endpoint</summary>
+          <form
+            class="field has-addons has-addons-right mt-2"
+            on:submit|preventDefault={(event) => {
+              let val = ''
+              if (event.target && event.target[0].value) {
+                val = (event.target[0].value).trim()
+              }
+              // Allow shorthand like "/v1/chat/completions" or "/v1/responses"
+              if (val.startsWith('/')) val = getApiBase() + val
+              setGlobalSettingValueByKey('openAICompletionEndpoint', val)
+            }}
+          >
+            <p class="control is-expanded">
+              <input
+                aria-label="OpenAI Completions Endpoint"
+                type="text"
+                class="input"
+                placeholder="Leave blank for default (/v1/chat/completions)"
+                value={openAICompletionEndpoint}
+              />
+            </p>
+            <p class="control">
+              <button class="button is-info" type="submit">Save</button>
+            </p>
+          </form>
+        </details>
       {/if}
     </div>
   </article>

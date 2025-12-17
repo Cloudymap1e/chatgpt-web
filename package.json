@@ -4,11 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0",
     "dev:public": "vite --host 0.0.0.0",
     "build": "vite build",
     "build:github": "vite build --base=/chatgpt-web/",
-    "preview": "vite preview",
+    "preview": "vite preview --host 0.0.0.0",
+    "gateway": "node gateway/server.mjs",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "tauri": "tauri",
     "lint": "eslint . --fix"
